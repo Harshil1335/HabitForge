@@ -83,7 +83,15 @@ npx prisma generate
 npm run seed
 ```
 
-### 4. Client Setup
+### 4. Demo Data Seeding (Development Only)
+To test the dashboard, analytics, and achievements with realistic historical data, you can generate 120 days of demo check-ins for a specific user:
+```bash
+cd server
+npm run seed:demo -- your-email@example.com
+```
+*Note: This command requires an existing registered user. It will safely replace **only** that user's habit and check-in history. It refuses to execute in production.*
+
+### 5. Client Setup
 Open a new terminal window:
 ```bash
 cd client

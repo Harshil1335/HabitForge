@@ -83,23 +83,44 @@ export const analyticsService = {
       if (created < earliestDate) earliestDate = created;
     }
 
-    // Overall current streak
-    const currentStreak = calculateStreakBackward(
-      (dateStr) => getDayStats(habits, checkInSet, dateStr, timezone),
-      endDate,
-      earliestDate
-    );
+    // Instead of account-wide perfect days (which are extremely rare), 
+    // the summary streak should represent the user's highest individual habit streak.
+    let maxCurrentStreak = 0;
+    let maxBestStreak = 0;
+    let maxCurrentStreakHabit = '';
+    let maxBestStreakHabit = '';
 
-    const bestStreak = calculateBestStreakForward(
-      (dateStr) => getDayStats(habits, checkInSet, dateStr, timezone),
-      earliestDate,
-      endDate
-    );
+    for (const habit of habits) {
+      const createdDate = habit.createdAt.toISOString().slice(0, 10);
+      
+      const currentStreak = calculateStreakBackward(
+        (dateStr) => getSingleHabitDayStats(habit, checkInSet, dateStr, timezone),
+        endDate,
+        createdDate
+      );
+
+      const bestStreak = calculateBestStreakForward(
+        (dateStr) => getSingleHabitDayStats(habit, checkInSet, dateStr, timezone),
+        createdDate,
+        endDate
+      );
+
+      if (currentStreak > maxCurrentStreak) {
+        maxCurrentStreak = currentStreak;
+        maxCurrentStreakHabit = habit.name;
+      }
+      if (bestStreak > maxBestStreak) {
+        maxBestStreak = bestStreak;
+        maxBestStreakHabit = habit.name;
+      }
+    }
 
     return {
       summary: {
-        currentStreak,
-        bestStreak,
+        currentStreak: maxCurrentStreak,
+        currentStreakHabit: maxCurrentStreakHabit,
+        bestStreak: maxBestStreak,
+        bestStreakHabit: maxBestStreakHabit,
         completionRate: safeCompletionRate(totalCompleted, totalScheduled),
         totalCheckIns,
         completedToday: todayStats.completed,
@@ -277,7 +298,8 @@ export const analyticsService = {
       summary: summaryData.summary,
       contributions: contributionsData.contributions,
       weekly: weeklyData,
-      topStreaks
+      topStreaks,
+      habitPerformances: perfData.habits
     };
   },
 

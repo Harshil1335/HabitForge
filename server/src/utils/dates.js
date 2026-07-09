@@ -1,18 +1,27 @@
 // Calendar-date utilities. All streak/heatmap logic operates on calendar dates,
 // never on raw timestamps minus 24h. A "calendar date" is a YYYY-MM-DD string.
 
+const formatters = new Map();
+
+function getFormatter(timeZone) {
+  if (!formatters.has(timeZone)) {
+    formatters.set(timeZone, new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }));
+  }
+  return formatters.get(timeZone);
+}
+
 /**
  * Convert a Date/timestamp to the user's local calendar date (YYYY-MM-DD),
  * using the IANA timezone the client reports. en-CA locale yields ISO order.
  */
 export function toCalendarDate(ts, timeZone = "UTC") {
   const d = ts instanceof Date ? ts : new Date(ts);
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
+  return getFormatter(timeZone).format(d);
 }
 
 /** Today's calendar date (YYYY-MM-DD) in the given timezone. */

@@ -1,0 +1,99 @@
+// HabitForge — Prisma schema (MySQL)
+// Dates: HabitCheckIn.checkInDate is a pure calendar DATE (no time component),
+// representing the user's LOCAL calendar day. See README "Timezone strategy".
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum FrequencyType {
+  DAILY
+  WEEKDAYS
+  CUSTOM
+}
+
+enum RequirementType {
+  HABIT_COUNT
+  TOTAL_CHECKINS
+  HABIT_BEST_STREAK
+  OVERALL_BEST_STREAK
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  password       String
+  profilePicture String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  habits       Habit[]
+  checkIns     HabitCheckIn[]
+  achievements UserAchievement[]
+}
+
+model Habit {
+  id            String        @id @default(cuid())
+  userId        String
+  name          String
+  description   String?       @db.Text
+  icon          String        @default("target")
+  color         String        @default("#10b981")
+  frequencyType FrequencyType @default(DAILY)
+  // JSON array of weekday indices 0..6 (Sun..Sat). Used when frequencyType = CUSTOM.
+  targetDays    Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  archivedAt    DateTime?
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkIns HabitCheckIn[]
+
+  @@index([userId])
+  @@index([userId, archivedAt])
+}
+
+model HabitCheckIn {
+  id          String   @id @default(cuid())
+  habitId     String
+  userId      String
+  checkInDate DateTime @db.Date
+  createdAt   DateTime @default(now())
+
+  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, checkInDate])
+  @@index([userId, checkInDate])
+  @@index([habitId, checkInDate])
+}
+
+model Achievement {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  description     String
+  icon            String
+  requirementType RequirementType
+  requirementValue Int
+
+  users UserAchievement[]
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}

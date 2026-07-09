@@ -1,0 +1,70 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f7f8fa;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  color: #0e1116;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: #2b54d4;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #1e42b0;
+}
+
+h1,
+h2,
+.disp {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, .12);
+  border-radius: 8px;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(.75);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise .6s cubic-bezier(.2, .7, .2, 1) both;
+}
+
+/* Base button and input styling to match the theme */
+button, input {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}

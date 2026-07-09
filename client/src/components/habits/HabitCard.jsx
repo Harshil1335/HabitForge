@@ -85,8 +85,8 @@ export const HabitCard = ({ habit, onCheckIn, onUndo, onEdit, onArchive, onDelet
         className="disp"
         style={{ flex: 'none', fontSize: '13px', fontWeight: 600, color: '#374151', minWidth: '40px', textAlign: 'right' }}
       >
-        {habit.currentStreak}
-        <span style={{ color: '#9aa0ab', fontWeight: 500 }}>d</span>
+        {habit.currentStreak !== undefined ? habit.currentStreak : '—'}
+        <span style={{ color: '#9aa0ab', fontWeight: 500, marginLeft: '2px' }}>d</span>
       </div>
       
       <div style={{ display: 'flex', gap: '4px', flex: 'none' }}>

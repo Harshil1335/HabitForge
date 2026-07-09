@@ -77,7 +77,7 @@ export const TodayHabits = ({ habits, toggleHabit }) => {
                   className="disp"
                   style={{ flex: 'none', fontSize: '13px', fontWeight: 600, color: '#374151' }}
                 >
-                  —
+                  {h.currentStreak !== undefined ? h.currentStreak : '—'}
                   <span style={{ color: '#9aa0ab', fontWeight: 500, marginLeft: '2px' }}>d</span>
                 </div>
                 <div style={{ display: 'flex', gap: '4px', flex: 'none', opacity: 0.55 }}>

@@ -5,11 +5,11 @@ export const HeroSection = ({ habits }) => {
   
   const firstName = user?.name ? user.name.split(' ')[0] : 'User';
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const greeting = hour < 12 ? 'Good morning' : hour < 16 ? 'Good afternoon' : 'Good evening';
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const scheduledToday = habits.length;
-  const completedToday = habits.filter((h) => h.done).length;
+  const completedToday = habits.filter((h) => h.isCheckedInToday).length;
   const progressPct = scheduledToday === 0 ? 0 : Math.round((completedToday / scheduledToday) * 100);
   const ringDash = `${(progressPct / 100) * 97.4} 97.4`;
   

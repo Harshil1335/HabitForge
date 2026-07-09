@@ -116,16 +116,21 @@ export const AnalyticsPage = () => {
             }}>
               {[
                 { label: 'Completion rate', value: summary?.completionRate || 0, unit: '%' },
-                { label: 'Current streak', value: summary?.currentStreak || 0, unit: 'days' },
-                { label: 'Best streak', value: summary?.bestStreak || 0, unit: 'days' },
+                { label: 'Current streak', value: summary?.currentStreak || 0, unit: 'days', subtext: summary?.currentStreakHabit },
+                { label: 'Best streak', value: summary?.bestStreak || 0, unit: 'days', subtext: summary?.bestStreakHabit },
                 { label: 'Total check-ins', value: summary?.totalCheckIns || 0, unit: '' },
               ].map((stat, i) => (
-                <div key={i} style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid rgba(14,17,22,.06)' }}>
+                <div key={i} style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid rgba(14,17,22,.06)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
                   <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '12px' }}>{stat.label}</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                     <span className="disp" style={{ fontSize: '32px', fontWeight: 600, letterSpacing: '-.02em', color: '#0e1116' }}>{stat.value}</span>
                     {stat.unit && <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 500 }}>{stat.unit}</span>}
                   </div>
+                  {stat.subtext && (
+                    <div style={{ marginTop: '12px', fontSize: '12px', color: '#3b6ef5', fontWeight: 600, background: '#eff6ff', padding: '4px 10px', borderRadius: '6px', alignSelf: 'flex-start', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                      {stat.subtext}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -137,7 +142,7 @@ export const AnalyticsPage = () => {
                 <h2 style={{ fontSize: '18px', fontWeight: 600, margin: '0 0 24px', letterSpacing: '-.01em' }}>Completion Trend</h2>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '200px', paddingBottom: '30px', position: 'relative', overflowX: 'auto' }}>
                   {trend?.points?.map((d, i) => (
-                    <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '24px' }}>
+                    <div key={i} style={{ flex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', minWidth: '24px', position: 'relative' }}>
                       <div 
                         title={`${d.completionRate}%`}
                         style={{ 
@@ -149,7 +154,7 @@ export const AnalyticsPage = () => {
                           transition: 'height .3s ease'
                         }} 
                       />
-                      <div style={{ position: 'absolute', bottom: 0, fontSize: '11px', color: '#9aa0ab', whiteSpace: 'nowrap' }}>
+                      <div style={{ position: 'absolute', bottom: '-24px', fontSize: '11px', color: '#9aa0ab', whiteSpace: 'nowrap' }}>
                         {d.label}
                       </div>
                     </div>

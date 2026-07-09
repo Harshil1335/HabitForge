@@ -35,6 +35,15 @@ export const DashboardPage = () => {
         achievementApi.getRecentAchievements(timezone, 3)
       ]);
       
+      if (analyticsRes?.habitPerformances) {
+        for (const h of habitsData) {
+          const perfMatch = analyticsRes.habitPerformances.find(p => p.id === h.id);
+          if (perfMatch) {
+            h.currentStreak = perfMatch.currentStreak;
+          }
+        }
+      }
+
       const scheduledForToday = habitsData.filter(h => isScheduledToday(h, timezone));
       setRealHabits(scheduledForToday);
       setAnalyticsData(analyticsRes);

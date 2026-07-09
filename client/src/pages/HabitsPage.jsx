@@ -7,6 +7,7 @@ import { ConfirmModal } from '../components/common/ConfirmModal';
 import { EmptyState } from '../components/common/EmptyState';
 import { AppCredit } from '../components/common/AppCredit';
 import { habitApi } from '../api/habitApi';
+import { analyticsApi } from '../api/analyticsApi';
 import { getBrowserTimezone } from '../utils/timezone';
 
 export const HabitsPage = () => {
@@ -22,6 +23,7 @@ export const HabitsPage = () => {
   const [editingHabit, setEditingHabit] = useState(null);
   
   const [confirmState, setConfirmState] = useState({ isOpen: false, type: null, habitId: null });
+  const [stats, setStats] = useState({ bestStreak: '—', avgCompletion: '—', bestStreakHabit: '' });
 
   // Fetch habits whenever statusFilter changes
   useEffect(() => {
@@ -31,9 +33,51 @@ export const HabitsPage = () => {
         setIsLoading(true);
         setError(null);
         const timezone = getBrowserTimezone();
-        const data = await habitApi.getHabits(statusFilter.toLowerCase(), timezone);
+        
+        const [habitsData, summaryData, perfData] = await Promise.all([
+          habitApi.getHabits(statusFilter.toLowerCase(), timezone),
+          analyticsApi.getSummary(timezone, '30d').catch(() => null),
+          analyticsApi.getHabitPerformance(timezone, 'year', 'longestStreak').catch(() => null)
+        ]);
+
         if (isMounted) {
-          setHabits(data);
+          setHabits(habitsData);
+          
+          let maxStreak = '—';
+          let avgComp = '—';
+          let bestHabitName = '';
+
+          if (summaryData && summaryData.summary) {
+            avgComp = summaryData.summary.completionRate;
+            maxStreak = summaryData.summary.bestStreak; // fallback
+          }
+
+          if (perfData && perfData.habits && perfData.habits.length > 0) {
+            // Inject current streak into the raw habits list so the cards can display it
+            for (const h of habitsData) {
+              const perfMatch = perfData.habits.find(p => p.id === h.id);
+              if (perfMatch) {
+                h.currentStreak = perfMatch.currentStreak;
+              }
+            }
+
+            let maxHabit = perfData.habits[0];
+            for (const h of perfData.habits) {
+              if (h.bestStreak > maxHabit.bestStreak) {
+                maxHabit = h;
+              }
+            }
+            maxStreak = maxHabit.bestStreak;
+            if (maxStreak > 0) {
+              bestHabitName = maxHabit.name;
+            }
+          }
+
+          setStats({
+            bestStreak: maxStreak,
+            avgCompletion: avgComp,
+            bestStreakHabit: bestHabitName
+          });
         }
       } catch (err) {
         if (isMounted) {
@@ -190,15 +234,20 @@ export const HabitsPage = () => {
           {[
             { label: 'Active Habits', value: totalActive, unit: '' },
             { label: 'Completed Today', value: completedToday, unit: `/${totalActive}` },
-            { label: 'Best Streak', value: '—', unit: 'days' },
-            { label: 'Avg Completion', value: '—', unit: '%' },
+            { label: 'Best Streak', value: stats.bestStreak, unit: 'days', subtext: stats.bestStreakHabit },
+            { label: 'Avg Completion', value: stats.avgCompletion, unit: '%' },
           ].map((stat, i) => (
-            <div key={i} style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid rgba(14,17,22,.06)' }}>
+            <div key={i} style={{ background: '#fff', padding: '24px', borderRadius: '16px', border: '1px solid rgba(14,17,22,.06)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
               <div style={{ fontSize: '13px', color: '#6b7280', fontWeight: 500, marginBottom: '12px' }}>{stat.label}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
                 <span className="disp" style={{ fontSize: '32px', fontWeight: 600, letterSpacing: '-.02em', color: '#0e1116' }}>{stat.value}</span>
                 {stat.unit && <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 500 }}>{stat.unit}</span>}
               </div>
+              {stat.subtext && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#3b6ef5', fontWeight: 600, background: '#eff6ff', padding: '4px 10px', borderRadius: '6px', alignSelf: 'flex-start', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+                  {stat.subtext}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -247,30 +296,30 @@ export const HabitsPage = () => {
           )}
         </div>
 
-        <HabitFormModal
-          isOpen={isFormOpen}
-          onClose={() => { setIsFormOpen(false); setEditingHabit(null); }}
-          onSubmit={handleCreateOrEdit}
-          initialData={editingHabit}
-        />
-
-        <ConfirmModal
-          isOpen={confirmState.isOpen}
-          title={confirmState.type === 'DELETE' ? 'Delete Habit' : 'Archive Habit'}
-          message={
-            confirmState.type === 'DELETE' 
-              ? 'Are you sure you want to permanently delete this habit? All associated history will be lost. This action cannot be undone.'
-              : 'Are you sure you want to archive this habit? It will be hidden from your active list and you will no longer be able to check in.'
-          }
-          confirmText={confirmState.type === 'DELETE' ? 'Delete' : 'Archive'}
-          isDanger={confirmState.type === 'DELETE'}
-          onConfirm={handleConfirmExecute}
-          onCancel={() => setConfirmState({ isOpen: false, type: null, habitId: null })}
-          isExecuting={confirmState.isExecuting}
-        />
-        
         <AppCredit />
       </div>
+
+      <HabitFormModal
+        isOpen={isFormOpen}
+        onClose={() => { setIsFormOpen(false); setEditingHabit(null); }}
+        onSubmit={handleCreateOrEdit}
+        initialData={editingHabit}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.type === 'DELETE' ? 'Delete Habit' : 'Archive Habit'}
+        message={
+          confirmState.type === 'DELETE' 
+            ? 'Are you sure you want to permanently delete this habit? All associated history will be lost. This action cannot be undone.'
+            : 'Are you sure you want to archive this habit? It will be hidden from your active list and you will no longer be able to check in.'
+        }
+        confirmText={confirmState.type === 'DELETE' ? 'Delete' : 'Archive'}
+        isDanger={confirmState.type === 'DELETE'}
+        onConfirm={handleConfirmExecute}
+        onCancel={() => setConfirmState({ isOpen: false, type: null, habitId: null })}
+        isExecuting={confirmState.isExecuting}
+      />
     </DashboardLayout>
   );
 };
